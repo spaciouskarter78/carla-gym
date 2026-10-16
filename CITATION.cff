@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "CarlaGym: a Gymnasium environment for joint bandwidth allocation and routing in congested packet networks"
+abstract: >-
+  A lightweight, pure-Python store-and-forward packet network simulator with a
+  Gymnasium interface, in which an agent allocates per-link bandwidth under a
+  budget and sets per-link routing weights. Ships with rule-based baselines, a
+  fluid flow upper bound, and a reproducible evaluation protocol.
+authors:
+  - family-names: Goparaju
+    given-names: Yeshwanth
+  - family-names: Karamtoth
+    given-names: Aryan
+  - family-names: Katakam
+    given-names: Sai Akshay
+  - family-names: Teegala
+    given-names: Varshitha
+  - family-names: Dande
+    given-names: Karthik Kumar
+version: 0.4.0
+license: BSD-2-Clause
+repository-code: "https://github.com/spaciouskarter78/carla-gym"
+keywords:
+  - reinforcement learning
+  - gymnasium
+  - network simulation
+  - routing
+  - bandwidth allocation
+  - traffic engineering

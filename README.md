@@ -684,6 +684,14 @@ comparable.
   scenario-matrix benchmark, input validation, `rgb_array` rendering.
 * Multi-agent env: every agent controls at least one link.
 
+## Contributing and citing
+
+Bug reports and pull requests are welcome; see `CONTRIBUTING.md` (setup, the
+test and reproducibility rules) and `CODE_OF_CONDUCT.md`. Tests run on GitHub
+Actions for Python 3.10 to 3.14 on Linux and Windows
+(`.github/workflows/tests.yml`). To cite the software, use `CITATION.cff`
+(GitHub shows it as "Cite this repository").
+
 ## License
 
 BSD 2-Clause; see `LICENSE`.

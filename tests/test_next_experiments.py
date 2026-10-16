@@ -52,7 +52,11 @@ def test_committed_benchmark_episodes_reproduce_with_defaults():
         for seed in (2000, 2001):
             r = run_episode(sc, B.POLICIES[name], seed, 200, 20)
             row = committed[(committed.scenario == sc["name"]) & (committed.policy == name) & (committed.seed == seed)]
-            assert r["reward"] == row.reward.iloc[0]
+            # The published numbers were produced on Python 3.14 / Windows. Other
+            # platforms and NumPy versions may differ in the last bits of a sum
+            # (seen in CI: 2e-17 on Python 3.10/3.11, Linux), so allow rounding
+            # noise. Bit-identical code paths are checked in the test above.
+            assert r["reward"] == pytest.approx(row.reward.iloc[0], rel=1e-12, abs=1e-15)
 
 
 def test_heuristic_parameters_take_effect():
