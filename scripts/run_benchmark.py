@@ -55,20 +55,17 @@ def scenarios(quick: bool) -> list[dict]:
     out.append({"name": "grid/bottleneck node 4 x0.5/budget 0.8", "family": "bottleneck",
                 "topology": "grid", "num_nodes": 9, "load_scale": 1.0, "budget": 0.8,
                 "bottlenecks": {4: 0.5}})
-    # (trace file, target load, label). The pcap trace is benchmarked at load 40,
-    # where it is loaded but not saturated. Load 110 is kept as an overload case.
-    # The cs448b trace loses about half its traffic at any load (a few spike
-    # bins carry most of the volume), so it is a stress case, not a benchmark.
-    traces = [("pcap_trace.csv", 40.0, "pcap trace/load 40")]
-    if not quick:
-        traces += [("pcap_trace.csv", 110.0, "pcap trace/load 110 (overload)"),
-                   ("cs448b_trace.csv", 110.0, "cs448b trace/load 110 (stress case)")]
-    for trace, load, label in traces:
-        for budget in ([0.5] if quick else [0.8, 0.5]):
-            out.append({"name": f"{label}/grid-16/budget {budget:g}",
-                        "family": "trace", "topology": "grid", "num_nodes": 16,
+    # Real topology and traffic: SNDlib's Abilene network and one week of its
+    # measured 5-minute traffic matrices (data/ABILENE_TRACE.md), each episode
+    # starting at a random point of the week. Load 120 / budget 0.8 is the
+    # training scenario (docs/ABILENE_SCENARIO.md); load 80 is less congested.
+    trace = "abilene_trace_20040301_7d.csv.gz"
+    for load in ([120.0] if quick else [80.0, 120.0]):
+        for budget in ([0.8] if quick else [0.8, 0.5]):
+            out.append({"name": f"abilene trace/load {load:g}/budget {budget:g}",
+                        "family": "trace", "topology": "abilene", "num_nodes": 12,
                         "load_scale": 1.0, "budget": budget, "trace": trace,
-                        "target_load": load})
+                        "target_load": load, "random_start": True})
     return out
 
 
@@ -77,7 +74,8 @@ def run_episode(sc: dict, policy, seed: int, steps: int, warmup: int) -> dict:
     if "trace" in sc:
         traffic = TraceTrafficGenerator(list(range(sc["num_nodes"])),
                                         os.path.join(DATA, sc["trace"]),
-                                        target_load=sc["target_load"], seed=seed)
+                                        target_load=sc["target_load"], seed=seed,
+                                        random_start=sc.get("random_start", False))
     env = CarlaGymEnv(topology=sc["topology"], num_nodes=sc["num_nodes"],
                       load_scale=sc["load_scale"], bandwidth_budget=sc["budget"],
                       bottlenecks=sc.get("bottlenecks"), max_steps=steps,

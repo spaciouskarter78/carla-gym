@@ -29,11 +29,9 @@ done: random/load x1/budget 0.5
 done: random/load x2/budget 0.8
 done: random/load x2/budget 0.5
 done: grid/bottleneck node 4 x0.5/budget 0.8
-done: pcap trace/load 40/grid-16/budget 0.8
-done: pcap trace/load 40/grid-16/budget 0.5
-done: pcap trace/load 110 (overload)/grid-16/budget 0.8
-done: pcap trace/load 110 (overload)/grid-16/budget 0.5
-done: cs448b trace/load 110 (stress case)/grid-16/budget 0.8
-done: cs448b trace/load 110 (stress case)/grid-16/budget 0.5
+done: abilene trace/load 80/budget 0.8
+done: abilene trace/load 80/budget 0.5
+done: abilene trace/load 120/budget 0.8
+done: abilene trace/load 120/budget 0.5
 
-Wrote 2220 episodes to results\benchmark
+Wrote 2100 episodes to results\benchmark

@@ -1,0 +1,33 @@
+[eval] timesteps=   25000  held-out reward=-0.722 +/- 0.139
+[eval] timesteps=   50000  held-out reward=-0.668 +/- 0.139
+[eval] timesteps=   75000  held-out reward=-0.584 +/- 0.212
+[eval] timesteps=  100000  held-out reward=-0.617 +/- 0.146
+[eval] timesteps=  125000  held-out reward=-0.609 +/- 0.134
+[eval] timesteps=  150000  held-out reward=-0.539 +/- 0.173
+[eval] timesteps=  175000  held-out reward=-0.532 +/- 0.178
+[eval] timesteps=  200000  held-out reward=-0.460 +/- 0.186
+[eval] timesteps=  225000  held-out reward=-0.486 +/- 0.155
+[eval] timesteps=  250000  held-out reward=-0.411 +/- 0.185
+[eval] timesteps=  275000  held-out reward=-0.374 +/- 0.177
+[eval] timesteps=  300000  held-out reward=-0.310 +/- 0.172
+[eval] timesteps=  325000  held-out reward=-0.281 +/- 0.192
+[eval] timesteps=  350000  held-out reward=-0.267 +/- 0.191
+[eval] timesteps=  375000  held-out reward=-0.225 +/- 0.180
+[eval] timesteps=  400000  held-out reward=-0.179 +/- 0.175
+[eval] timesteps=  425000  held-out reward=-0.096 +/- 0.194
+[eval] timesteps=  450000  held-out reward=-0.080 +/- 0.192
+[eval] timesteps=  475000  held-out reward=-0.028 +/- 0.192
+[eval] timesteps=  500000  held-out reward=+0.009 +/- 0.196
+
+=== Held-out evaluation (test seeds) ===
+                    reward_mean  reward_std
+policy                                     
+congestion_aware          0.226       0.229
+load_aware_routing        0.089       0.269
+PPO                       0.029       0.207
+queue_proportional       -0.120       0.150
+max_bandwidth            -0.314       0.166
+random                   -0.808       0.162
+min_bandwidth            -1.670       0.039
+
+Saved to results\rl\abilene_l120_b08\ppo_seed0

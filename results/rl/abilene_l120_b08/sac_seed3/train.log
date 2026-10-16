@@ -1,0 +1,23 @@
+[eval] timesteps=   10000  held-out reward=-0.769 +/- 0.143
+[eval] timesteps=   20000  held-out reward=-0.471 +/- 0.168
+[eval] timesteps=   30000  held-out reward=-0.809 +/- 0.129
+[eval] timesteps=   40000  held-out reward=-0.647 +/- 0.099
+[eval] timesteps=   50000  held-out reward=+0.053 +/- 0.176
+[eval] timesteps=   60000  held-out reward=+0.147 +/- 0.168
+[eval] timesteps=   70000  held-out reward=+0.117 +/- 0.197
+[eval] timesteps=   80000  held-out reward=+0.110 +/- 0.206
+[eval] timesteps=   90000  held-out reward=-0.304 +/- 0.266
+[eval] timesteps=  100000  held-out reward=+0.147 +/- 0.244
+
+=== Held-out evaluation (test seeds) ===
+                    reward_mean  reward_std
+policy                                     
+congestion_aware          0.226       0.229
+SAC                       0.137       0.215
+load_aware_routing        0.089       0.269
+queue_proportional       -0.120       0.150
+max_bandwidth            -0.314       0.166
+random                   -0.808       0.154
+min_bandwidth            -1.670       0.039
+
+Saved to results\rl\abilene_l120_b08\sac_seed3

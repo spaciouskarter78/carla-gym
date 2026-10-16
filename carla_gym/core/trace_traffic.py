@@ -13,6 +13,12 @@ every time bin, empty ones included) equals `target_load` units/step -- this
 is how you match it to link_capacity.
 Each record becomes a Poisson number of packets (volume-conserving) with a QoS
 class by `qos_mix` (traces rarely carry class labels).
+A CSV may be gzip-compressed (`.csv.gz`).
+
+random_start=True starts every episode at a random time bin of the trace,
+drawn from the generator's own stream when it is reset, so a long trace (a
+week of 5-minute bins) is covered across episodes instead of every episode
+replaying its first bins. A seeded reset gives the same start every time.
 """
 from __future__ import annotations
 import numpy as np
@@ -21,7 +27,8 @@ from carla_gym.core.traffic import Packet, QoSClass, DEFAULT_QOS_PROFILES
 
 
 class TraceTrafficGenerator:
-    def __init__(self, nodes, csv_path, target_load=104.0, qos_mix=None, loop=True, seed=None):
+    def __init__(self, nodes, csv_path, target_load=104.0, qos_mix=None, loop=True, seed=None,
+                 random_start=False):
         self.nodes = list(nodes)
         df = pd.read_csv(csv_path)
         need = {"step", "src", "dst", "volume"}
@@ -49,13 +56,21 @@ class TraceTrafficGenerator:
         self.mean_size = float(sum(m * DEFAULT_QOS_PROFILES[q]["packet_size"]
                                    for m, q in zip(self.mix, self.qos)))
         self.rng = np.random.default_rng(seed)
+        self.random_start = random_start
+        self.offset = int(self.rng.integers(self.n_steps)) if random_start else 0
 
     def reset(self, seed=None):
         if seed is not None:
             self.rng = np.random.default_rng(seed)
+        if self.random_start:
+            self.offset = int(self.rng.integers(self.n_steps))
 
     def generate(self, step):
-        t = step % self.n_steps if self.loop else step
+        # The offset only chooses which time bin of the trace to read. Packets
+        # are stamped with the simulator's own step: their delay is measured
+        # against it, so stamping the shifted step would make delays negative.
+        shifted = step + self.offset
+        t = shifted % self.n_steps if self.loop else shifted
         packets = []
         for src, dst, vol in self.by_step.get(t, []):
             n = self.rng.poisson(vol / self.mean_size)   # conserves volume on average

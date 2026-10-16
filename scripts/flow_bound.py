@@ -94,7 +94,7 @@ def main():
             "below it is an upper limit on what any policy could gain, not a measure of it.")
     t = training()
     with open(os.path.join(OUT, "training.md"), "w", encoding="utf-8") as f:
-        f.write(head + " The pcap row's bound uses the trace's mean matrix and ignores bursts.\n\n" + "\n".join(t) + "\n")
+        f.write(head + " The trace row's bound uses the trace's mean matrix over the week and ignores its daily cycle, so it is looser still.\n\n" + "\n".join(t) + "\n")
     print("\n".join(t), "\n", flush=True)
     b = benchmark()
     with open(os.path.join(OUT, "benchmark.md"), "w", encoding="utf-8") as f:

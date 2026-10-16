@@ -1,0 +1,12 @@
+10 runs, 10 at a time
+[00:05:21] 1/10 results\rl\abilene_l120_b08\ppo_seed0: done in 53.6 min
+[00:42:09] 2/10 results\rl\abilene_l120_b08\sac_seed0: done in 90.4 min
+[00:42:09] 3/10 results\rl\abilene_l120_b08\ppo_seed1: done in 53.5 min
+[00:42:09] 4/10 results\rl\abilene_l120_b08\sac_seed1: done in 89.8 min
+[00:42:09] 5/10 results\rl\abilene_l120_b08\ppo_seed2: done in 53.4 min
+[00:42:09] 6/10 results\rl\abilene_l120_b08\sac_seed2: done in 89.9 min
+[00:42:09] 7/10 results\rl\abilene_l120_b08\ppo_seed3: done in 53.2 min
+[00:42:09] 8/10 results\rl\abilene_l120_b08\sac_seed3: done in 90.2 min
+[00:42:09] 9/10 results\rl\abilene_l120_b08\ppo_seed4: done in 54.1 min
+[00:42:10] 10/10 results\rl\abilene_l120_b08\sac_seed4: done in 90.4 min
+ALL DONE

@@ -1,5 +1,5 @@
 scenario,flags,bound_free,bound_shortest,best_heuristic,best_heuristic_delivered,ppo_delivered,sac_delivered
 grid_l125_b06,--load-scale 1.25 --budget 0.6,0.9030480241006565,0.9030480241006565,congestion_aware,0.7407707912045325,0.7345246885339087,0.68630895878282
 grid_bottleneck_b08,--bottleneck 4:0.5,0.9999999999999986,0.9999999999999986,load_aware_routing,0.8495509807043055,0.9460585713771728,0.9028862652748123
-pcap40_grid16_b05,--trace data/pcap_trace.csv --nodes 16 --load 40 --budget 0.5,1.0,1.0,congestion_aware,0.7515473706537003,0.7910146848593197,0.7537196143423449
+abilene_l120_b08,--topology abilene --nodes 12 --trace data/abilene_trace_20040301_7d.csv.gz --load 120 --budget 0.8 --trace-random-start,0.9251706624109316,0.9251706624109316,congestion_aware,0.8071961454695353,0.753883817129368,0.7845076847144535
 random9_l15_b06,--topology random --topology-seed 0 --load-scale 1.5 --budget 0.6,0.9938862307283359,0.9938862307283359,queue_proportional,0.7965876870789306,0.8127062232560825,0.7610711545860913

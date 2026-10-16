@@ -7,8 +7,14 @@ stats to tell whether it will calibrate into a usable load regime before
 you spend a training run finding out.
 
 Usage (PowerShell: $env:PYTHONPATH = "."   bash: export PYTHONPATH=.):
-    python scripts/prepare_trace.py --in data/raw/cs448b_ipasn.csv --out data/cs448b_trace.csv
-    python scripts/prepare_trace.py --in data/raw/output1.csv --out data/pcap_trace.csv --bin-seconds 5
+    python scripts/prepare_trace.py --in data/raw/my_flows.csv --out data/raw/my_trace.csv
+    python scripts/prepare_trace.py --in data/raw/my_capture.csv --out data/raw/my_trace.csv --bin-seconds 5
+
+Converts your own flow logs or packet captures (formats: see
+carla_gym/core/dataset_adapters.py). The repository ships no trace made with
+this script: the distributed trace comes from SNDlib
+(scripts/prepare_sndlib_trace.py, data/ABILENE_TRACE.md). Keep traces built
+from private captures out of version control.
 
 The raw inputs are not distributed with the repository; data/raw/ is ignored
 by git. Use your own flow-count or packet-capture CSV in one of the two
@@ -68,7 +74,7 @@ def main():
     total_capacity_per_step = net.num_edges() * default_link_capacity
     # About 5% of total link capacity: a trace concentrates its load on few
     # node pairs and few time bins, so it saturates far below the level that
-    # evenly spread synthetic traffic tolerates (the pcap trace delivers
+    # evenly spread synthetic traffic tolerates (an earlier packet-capture trace delivered
     # roughly 77% at load 40 on the 4x4 grid and 43% at load 110).
     suggested_load = round(0.05 * total_capacity_per_step, -1) or 10.0
 

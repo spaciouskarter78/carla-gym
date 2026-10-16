@@ -4,7 +4,7 @@ Delivered % of offered traffic, test seeds 2000-2009, steps 20..199, mean ± 95%
 |---|---|---:|---:|---|---:|
 | `grid_l125_b06` | `--load-scale 1.25 --budget 0.6` | 73.5 ± 0.6 | 68.6 ± 1.3 | congestion_aware 74.1 ± 1.4 | 90.3 |
 | `grid_bottleneck_b08` | `--bottleneck 4:0.5` | 94.6 ± 0.3 | 90.3 ± 1.4 | load_aware_routing 85.0 ± 0.8 | 100.0 |
-| `pcap40_grid16_b05` | `--trace data/pcap_trace.csv --nodes 16 --load 40 --budget 0.5` | 79.1 ± 0.7 | 75.4 ± 1.1 | congestion_aware 75.2 ± 1.6 | 100.0 |
+| `abilene_l120_b08` | `--topology abilene --nodes 12 --trace data/abilene_trace_20040301_7d.csv.gz --load 120 --budget 0.8 --trace-random-start` | 75.4 ± 3.3 | 78.5 ± 2.3 | congestion_aware 80.7 ± 8.5 | 92.5 |
 | `random9_l15_b06` | `--topology random --topology-seed 0 --load-scale 1.5 --budget 0.6` | 81.3 ± 0.4 | 76.1 ± 1.8 | queue_proportional 79.7 ± 0.7 | 99.4 |
 | `grid_l125_b06_bandwidth_only` | `--load-scale 1.25 --budget 0.6 --control bandwidth` | 72.9 ± 0.3 | n/a | congestion_aware 74.1 ± 1.4 | 90.3 |
 | `grid_l125_b06_routing_only` | `--load-scale 1.25 --budget 0.6 --control routing` | 72.2 ± 0.2 | n/a | congestion_aware 74.1 ± 1.4 | 90.3 |

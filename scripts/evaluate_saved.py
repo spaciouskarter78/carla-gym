@@ -9,7 +9,7 @@ packets, and deadline misses per delivered packet.
     $env:PYTHONPATH = "."        (bash: export PYTHONPATH=.)
     python scripts/evaluate_saved.py results/rl/grid_l125_b06
     python scripts/evaluate_saved.py results/rl/grid_bottleneck_b08
-    python scripts/evaluate_saved.py some/dir --scenario pcap40_grid16_b05
+    python scripts/evaluate_saved.py some/dir --scenario abilene_l120_b08
     python scripts/evaluate_saved.py some/dir --load-scale 1.25 --budget 0.6
 
 Expects <dir>/<algo>_seed<N>/model.zip from examples/train_agent.py. The env

@@ -287,7 +287,7 @@ Delivered % of offered traffic, test seeds 2000-2009, steps 20..199, mean ± 95%
 |---|---|---:|---:|---|---:|
 | `grid_l125_b06` | `--load-scale 1.25 --budget 0.6` | 73.5 ± 0.6 | 68.6 ± 1.3 | congestion_aware 74.1 ± 1.4 | 90.3 |
 | `grid_bottleneck_b08` | `--bottleneck 4:0.5` | 94.6 ± 0.3 | 90.3 ± 1.4 | load_aware_routing 85.0 ± 0.8 | 100.0 |
-| `pcap40_grid16_b05` | `--trace data/pcap_trace.csv --nodes 16 --load 40 --budget 0.5` | 79.1 ± 0.7 | 75.4 ± 1.1 | congestion_aware 75.2 ± 1.6 | 100.0 |
+| `abilene_l120_b08` | `--topology abilene --nodes 12 --trace data/abilene_trace_20040301_7d.csv.gz --load 120 --budget 0.8 --trace-random-start` | 75.4 ± 3.3 | 78.5 ± 2.3 | congestion_aware 80.7 ± 8.5 | 92.5 |
 | `random9_l15_b06` | `--topology random --topology-seed 0 --load-scale 1.5 --budget 0.6` | 81.3 ± 0.4 | 76.1 ± 1.8 | queue_proportional 79.7 ± 0.7 | 99.4 |
 | `grid_l125_b06_bandwidth_only` | `--load-scale 1.25 --budget 0.6 --control bandwidth` | 72.9 ± 0.3 | n/a | congestion_aware 74.1 ± 1.4 | 90.3 |
 | `grid_l125_b06_routing_only` | `--load-scale 1.25 --budget 0.6 --control routing` | 72.2 ± 0.2 | n/a | congestion_aware 74.1 ± 1.4 | 90.3 |
@@ -297,13 +297,17 @@ Delivered % of offered traffic, test seeds 2000-2009, steps 20..199, mean ± 95%
 | `random9_l15_b06_bandwidth_only` | `--topology random --topology-seed 0 --load-scale 1.5 --budget 0.6 --control bandwidth` | 80.8 ± 0.2 | n/a | queue_proportional 79.7 ± 0.7 | 99.4 |
 <!-- RESULTS:rl_overview:end -->
 
-PPO delivers more than every rule-based policy in three of the four scenarios,
-most on the bottleneck. On the headline scenario it does not: it delivers
-about as much as `congestion_aware` but with longer delays and more missed
-deadlines, so its reward is lower. Controlling both halves of the action does
-not help PPO on the headline compared with bandwidth alone. Paired statistics,
-convergence and the ablations are in `docs/RL_RESULTS_0.4.0.md`; QA checks in
-`docs/QA_RL_RESULTS_REPORT.md`.
+PPO delivers more than every rule-based policy in two of the four scenarios,
+the bottleneck (by the widest margin) and the random graph. It does not on
+the headline grid, where it delivers about as much as `congestion_aware` but
+with longer delays and more missed deadlines, so its reward is lower; nor on
+the real Abilene topology and trace, where `congestion_aware` delivers more
+than both PPO and SAC. Controlling both halves of the action does not help PPO
+on the headline compared with bandwidth alone. The Abilene scenario replaces
+an earlier trace scenario whose data was withdrawn (`docs/ABILENE_SCENARIO.md`,
+which also records a bug found and fixed while choosing it). Paired
+statistics, convergence and the ablations for the other scenarios are in
+`docs/RL_RESULTS_0.4.0.md`; QA checks in `docs/QA_RL_RESULTS_REPORT.md`.
 
 Headline scenario (3x3 grid, load x1.25, budget 0.6), reward:
 
@@ -353,13 +357,13 @@ do. Read the room below it as an upper limit, not as headroom
 (`docs/QA_BOUNDS_REPORT.md`).
 
 <!-- RESULTS:bounds:start -->
-Fluid flow upper bound on the delivered fraction (%), from carla_gym/bounds.py: the expected traffic matrix, link capacities and the bandwidth budget, with the allocation chosen optimally. No policy can exceed it in the long run; a finite window can exceed it slightly through backlog carried in. Policy figures: delivered % on test seeds 2000-2009, steps 20..199. The bound is loose (docs/RL_RESULTS_0.4.0.md, section 2.6): the room below it is an upper limit on what any policy could gain, not a measure of it. The pcap row's bound uses the trace's mean matrix and ignores bursts.
+Fluid flow upper bound on the delivered fraction (%), from carla_gym/bounds.py: the expected traffic matrix, link capacities and the bandwidth budget, with the allocation chosen optimally. No policy can exceed it in the long run; a finite window can exceed it slightly through backlog carried in. Policy figures: delivered % on test seeds 2000-2009, steps 20..199. The bound is loose (docs/RL_RESULTS_0.4.0.md, section 2.6): the room below it is an upper limit on what any policy could gain, not a measure of it. The trace row's bound uses the trace's mean matrix over the week and ignores its daily cycle, so it is looser still.
 
 | Scenario | Bound, free routing | Bound, shortest paths | Best heuristic | PPO | SAC |
 |---|---:|---:|---|---:|---:|
 | grid_l125_b06 | 90.3 | 90.3 | congestion_aware 74.1 | 73.5 | 68.6 |
 | grid_bottleneck_b08 | 100.0 | 100.0 | load_aware_routing 85.0 | 94.6 | 90.3 |
-| pcap40_grid16_b05 | 100.0 | 100.0 | congestion_aware 75.2 | 79.1 | 75.4 |
+| abilene_l120_b08 | 92.5 | 92.5 | congestion_aware 80.7 | 75.4 | 78.5 |
 | random9_l15_b06 | 99.4 | 99.4 | queue_proportional 79.7 | 81.3 | 76.1 |
 <!-- RESULTS:bounds:end -->
 
@@ -374,8 +378,9 @@ the runs; results in `docs/E1_E4_RESULTS.md` and `docs/E2_E3_RESULTS.md`,
 QA in `docs/QA_E1_E4_REPORT.md` and `docs/QA_E2_E3_REPORT.md`.
 
 * **E1, tuned rule-based policies.** The heuristics' constants were tuned on
-  validation seeds. PPO's wins on the bottleneck, the pcap trace and the
-  random graph hold against the strongest rule-based policy, tuned or not.
+  validation seeds. PPO's wins on the bottleneck and the random graph hold
+  against the strongest rule-based policy, tuned or not. (E1 also covered the
+  withdrawn pcap trace scenario; it was not repeated on Abilene.)
   On the headline the published `congestion_aware` was already as good as
   its tuned versions.
 * **E2, tuned PPO on the headline.** Eight PPO configurations were compared
@@ -453,12 +458,10 @@ Mean post-warmup reward ± 95% CI over 10 seeds (2000..2009), 200 steps, warmup 
 | random/load x2/budget 0.8 | -0.912 ± 0.017 | -1.722 ± 0.007 | -0.081 ± 0.026 | **+0.226 ± 0.020** | -0.035 ± 0.021 | +0.188 ± 0.017 |
 | random/load x2/budget 0.5 | -0.981 ± 0.019 | -1.722 ± 0.007 | -0.779 ± 0.020 | -0.390 ± 0.020 ~ | -0.765 ± 0.023 | -0.412 ± 0.021 ~ |
 | grid/bottleneck node 4 x0.5/budget 0.8 | -0.869 ± 0.019 | -1.729 ± 0.007 | -0.104 ± 0.036 | +0.153 ± 0.023 | +0.397 ± 0.021 ~ | +0.368 ± 0.013 ~ |
-| pcap trace/load 40/grid-16/budget 0.8 | -0.068 ± 0.022 | -0.967 ± 0.020 | +0.220 ± 0.016 | +0.238 ± 0.017 ~ | +0.262 ± 0.018 ~ | +0.125 ± 0.019 |
-| pcap trace/load 40/grid-16/budget 0.5 | -0.097 ± 0.022 | -0.967 ± 0.020 | -0.005 ± 0.016 | **+0.238 ± 0.017** | +0.125 ± 0.020 | +0.125 ± 0.019 |
-| pcap trace/load 110 (overload)/grid-16/budget 0.8 | -0.419 ± 0.029 | -1.212 ± 0.023 | -0.080 ± 0.016 | -0.036 ± 0.012 ~ | -0.020 ± 0.017 ~ | -0.064 ± 0.022 |
-| pcap trace/load 110 (overload)/grid-16/budget 0.5 | -0.441 ± 0.027 | -1.212 ± 0.023 | -0.346 ± 0.014 | -0.037 ± 0.013 ~ | -0.290 ± 0.019 | -0.068 ± 0.023 ~ |
-| cs448b trace/load 110 (stress case)/grid-16/budget 0.8 | +0.177 ± 0.049 | -1.325 ± 0.027 | **+0.560 ± 0.006** | +0.468 ± 0.017 | +0.514 ± 0.012 | +0.365 ± 0.016 |
-| cs448b trace/load 110 (stress case)/grid-16/budget 0.5 | +0.142 ± 0.048 | -1.325 ± 0.027 | +0.360 ± 0.023 | **+0.468 ± 0.017** | +0.409 ± 0.015 | +0.365 ± 0.021 |
+| abilene trace/load 80/budget 0.8 | -0.550 ± 0.114 | -1.572 ± 0.039 | -0.054 ± 0.155 | +0.191 ± 0.165 | +0.440 ± 0.124 ~ | +0.441 ± 0.074 ~ |
+| abilene trace/load 80/budget 0.5 | -0.586 ± 0.110 | -1.572 ± 0.039 | -0.425 ± 0.123 | +0.078 ± 0.200 ~ | -0.107 ± 0.223 ~ | +0.266 ± 0.166 ~ |
+| abilene trace/load 120/budget 0.8 | -0.792 ± 0.109 | -1.670 ± 0.028 | -0.314 ± 0.119 | -0.120 ± 0.107 | +0.089 ± 0.193 ~ | +0.226 ± 0.164 ~ |
+| abilene trace/load 120/budget 0.5 | -0.848 ± 0.108 | -1.670 ± 0.028 | -0.744 ± 0.119 | -0.339 ± 0.161 ~ | -0.615 ± 0.147 | -0.192 ± 0.214 ~ |
 <!-- RESULTS:benchmark:end -->
 
 In most scenarios the leading heuristics are statistically tied; a policy is
@@ -503,72 +506,64 @@ Traffic delivered / dropped, as % of traffic offered after warm-up (episode aggr
 | random/load x2/budget 0.8 | 34.2 / 65.8 | 4.8 / 95.2 | 62.9 / 37.1 | 73.0 / 27.1 | 64.5 / 35.7 | 71.3 / 28.7 |
 | random/load x2/budget 0.5 | 32.2 / 67.8 | 4.8 / 95.2 | 41.1 / 58.9 | 51.8 / 48.3 | 41.7 / 58.3 | 51.2 / 48.9 |
 | grid/bottleneck node 4 x0.5/budget 0.8 | 39.2 / 60.8 | 5.3 / 94.7 | 64.6 / 35.0 | 73.4 / 26.4 | 85.0 / 15.0 | 84.0 / 15.9 |
-| pcap trace/load 40/grid-16/budget 0.8 | 56.6 / 41.7 | 9.6 / 79.6 | 70.3 / 28.5 | 74.8 / 23.7 | 79.1 / 19.0 | 75.2 / 22.3 |
-| pcap trace/load 40/grid-16/budget 0.5 | 55.1 / 43.1 | 9.6 / 79.6 | 56.7 / 41.8 | 74.8 / 23.7 | 70.2 / 27.6 | 75.2 / 22.3 |
-| pcap trace/load 110 (overload)/grid-16/budget 0.8 | 29.0 / 69.7 | 3.4 / 91.9 | 39.3 / 60.2 | 42.4 / 56.9 | 45.4 / 53.6 | 45.7 / 52.8 |
-| pcap trace/load 110 (overload)/grid-16/budget 0.5 | 28.2 / 70.5 | 3.4 / 91.9 | 29.9 / 69.1 | 42.4 / 56.9 | 34.2 / 64.2 | 45.5 / 53.2 |
-| cs448b trace/load 110 (stress case)/grid-16/budget 0.8 | 39.1 / 61.4 | 6.7 / 91.9 | 44.3 / 55.9 | 44.3 / 56.3 | 45.8 / 54.7 | 44.6 / 56.0 |
-| cs448b trace/load 110 (stress case)/grid-16/budget 0.5 | 38.6 / 61.9 | 6.7 / 91.9 | 40.8 / 59.6 | 44.3 / 56.3 | 44.7 / 55.9 | 44.5 / 56.1 |
+| abilene trace/load 80/budget 0.8 | 53.8 / 46.2 | 9.8 / 88.3 | 74.9 / 24.8 | 82.8 / 16.8 | 90.9 / 8.7 | 93.2 / 6.7 |
+| abilene trace/load 80/budget 0.5 | 52.5 / 47.5 | 9.8 / 88.3 | 59.7 / 40.1 | 79.2 / 20.7 | 72.4 / 27.4 | 86.3 / 13.6 |
+| abilene trace/load 120/budget 0.8 | 42.8 / 57.8 | 6.9 / 92.5 | 61.7 / 38.7 | 67.4 / 32.8 | 74.8 / 25.5 | 80.7 / 19.5 |
+| abilene trace/load 120/budget 0.5 | 40.3 / 60.2 | 6.9 / 92.5 | 44.6 / 55.7 | 60.2 / 40.3 | 49.8 / 50.5 | 65.1 / 35.3 |
 <!-- RESULTS:benchmark_qos:end -->
 
-The trace scenarios show why the delivered / dropped table matters. At a
-mean load of 40 the pcap trace is loaded but workable: the four heuristics
-(all policies except random and min_bandwidth) drop 19 to 42% of its traffic
-and separate clearly at the tighter budget. At 110 it is in overload (53 to
-69% dropped). The cs448b trace is a stress case: the heuristics drop 55 to
-60% of it, because a few spike bins carry most of
-its volume, yet its reward is positive. The reward averages per-step ratios,
-so a quiet step counts as much as a heavy one (see Limitations).
+On the Abilene trace the four heuristics (all policies except random and
+min_bandwidth) drop 7 to 25% of the traffic at mean load 80 with budget 0.8,
+14 to 40% with budget 0.5, and 20 to 39% at load 120 with budget 0.8 (the
+training scenario), 35 to 56% with budget 0.5. `congestion_aware` delivers
+the most in every Abilene cell. Each episode starts at a random point of the
+week and real load follows a daily cycle, so rewards vary between episodes;
+read the delivered / dropped table next to the reward, and compare policies
+on the same seeds.
 
 ## Datasets
 
-Two dataset-derived traces ship in `data/`. Each is a `step,src,dst,volume`
-CSV holding simulator node ids only:
+One trace of real traffic ships in `data/`:
 
-| Trace | Derived from | Rows | Steps |
-|---|---|---:|---:|
-| `data/cs448b_trace.csv` | Daily flow counts per (local host, remote ASN) over 92 days, from a Stanford CS448B course dataset (`cs448b_ipasn.csv`). One simulation step = one day; the values are flow counts, not volumes. | 4,644 | 92 |
-| `data/pcap_trace.csv` | A packet capture of about 21 minutes (exported from Wireshark), binned into 5-second steps; volume = bytes. | 4,163 | 252 (246 with traffic) |
+| Trace | Source | Steps | Topology |
+|---|---|---:|---|
+| `data/abilene_trace_20040301_7d.csv.gz` | One week (1-7 March 2004) of the Abilene research backbone's measured traffic, as 5-minute traffic matrices in Mbit/s, from [SNDlib](https://sndlib.put.poznan.pl)'s dynamic traffic matrices (measurements by Yin Zhang) | 2,016 | `topology="abilene"`: SNDlib's Abilene network, 12 routers, 15 links with their relative capacities |
 
-**The raw files are not distributed.** The capture contains real IP
-addresses and the flow-count file has no stated licence. The traces above
-were produced from them by `dataset_adapters.py`, which maps addresses and
-ASNs to 16 node ids through a hash, so no address appears in this repository's
-current files. After rescaling to a target load only the *shape* of the load
-over time and across node pairs survives: treat the traces as load shapes
-derived from real measurements, not as a replay of real traffic.
+Provenance, the citations SNDlib asks for, and terms are in
+`data/ABILENE_TRACE.md`. SNDlib states no licence; confirm with its
+maintainer before redistributing derived data.
 
 ```
-python examples/train_agent.py --algo ppo --trace data/pcap_trace.csv --nodes 16 --load 40 --budget 0.5
+python examples/train_agent.py --algo ppo --topology abilene --nodes 12 --trace data/abilene_trace_20040301_7d.csv.gz --load 120 --budget 0.8 --trace-random-start
 ```
 
-To build a trace from your own data, put a CSV in one of the two supported
-formats anywhere outside version control (`data/raw/` is git-ignored) and run:
+* `TraceTrafficGenerator` rescales the volumes so that the mean offered load
+  per step, over all time bins including empty ones, equals `target_load`,
+  and turns each demand into a Poisson number of packets with a QoS class
+  drawn from `qos_mix`.
+* `random_start=True` (`--trace-random-start`) starts each episode at a
+  random time bin, drawn from the episode's seed, so a week-long trace is
+  covered across episodes. Real traffic follows a daily cycle (the total
+  roughly doubles from night to afternoon), so rewards vary with the time an
+  episode samples; compare policies on the same seeds.
+* `scripts/prepare_sndlib_trace.py` rebuilds the trace from SNDlib's archive
+  (another week: change `--start`).
+
+**Two earlier traces were removed** (a packet capture and a course
+flow-count dataset): their origin and licence could not be established. The
+adapters that built them are still in `carla_gym/core/dataset_adapters.py`
+for converting your own data:
 
 ```
-python scripts/prepare_trace.py --in data/raw/my_capture.csv --out data/my_trace.csv --bin-seconds 5
+python scripts/prepare_trace.py --in data/raw/my_capture.csv --out data/raw/my_trace.csv --bin-seconds 5
 ```
 
 Supported inputs: a flow-count table with columns `date, l_ipn, r_asn, f`; or
 a packet-capture export with `Timestamp, Source IP, Destination IP, Length`
 (numeric) or `Time, Source, Destination, Length` (Wireshark text export).
-
-Design points:
-
-* IP addresses and ASNs are bucketed into node ids with a stable MD5-based
-  hash, so conversion is reproducible across processes and machines.
-* Placement is topology-aware: the busiest buckets go to the best-connected
-  nodes, so a traffic hub does not land on a two-link grid corner. For
-  `--topology random`, pass `--topology-seed` equal to the env's seed.
-* Trace volume is rescaled so the mean offered load per step, over all time
-  bins including empty ones, equals `target_load`.
-* Choose `target_load` well below the synthetic default. Trace load is
-  concentrated on few node pairs and few time bins: on the 4x4 grid the pcap
-  trace is a sensible scenario at a mean load of about 40 and is deep in
-  overload at 110.
-* The cs448b trace is a stress case, not a benchmark. Its busiest 10% of time
-  bins carry 64% of the volume, so about half its traffic is lost at any mean
-  load.
+Addresses and ASNs are bucketed into node ids with a stable MD5-based hash,
+and the busiest buckets are placed on the best-connected nodes. Keep raw and
+private captures outside version control (`data/raw/` is git-ignored).
 
 ## Notebooks
 
@@ -582,9 +577,9 @@ python -m jupyter nbconvert --to notebook --execute --inplace 01_simulation_walk
 | Notebook | What it shows |
 |---|---|
 | `01_simulation_walkthrough.ipynb` | The five topologies and their nodes, one episode step by step (backlog, utilization, the four reward terms), network renders, `rgb_array` output, a zero-bandwidth stress test and a node bottleneck. |
-| `02_policy_comparison.ipynb` | All six baselines on synthetic traffic and on the pcap trace, with 95% intervals. |
-| `03_dataset_exploration.ipynb` | The two dataset-derived traces: load over time, which node pairs carry it, the topology-aware placement, and both traces run through the simulator. |
-| `04_ppo_training_curves.ipynb` | Learning curves of the saved multi-seed PPO and SAC runs, plus a short PPO run trained live on the pcap trace. |
+| `02_policy_comparison.ipynb` | All six baselines on synthetic traffic and on the Abilene trace, with 95% intervals. |
+| `03_dataset_exploration.ipynb` | The Abilene trace: load over the week, which router pairs carry it, the topology, and the trace through the simulator. |
+| `04_ppo_training_curves.ipynb` | Learning curves of the saved multi-seed PPO and SAC runs on the headline scenario, plus a short PPO run trained live on the Abilene trace. |
 
 ## Tests
 
@@ -593,7 +588,7 @@ python -m pytest -q
 ```
 
 <!-- RESULTS:tests:start -->
-Last run: **206 passed**.
+Last run: **210 passed**.
 <!-- RESULTS:tests:end -->
 
 The suite covers Gymnasium API conformance (`check_env`, including rendering),
@@ -627,9 +622,10 @@ datasets in `data/raw/` and are skipped otherwise.
   throughput credit.
 * **The reward averages per-step ratios, so on strongly bursty load it is not
   a measure of delivered traffic.** A quiet step counts as much as a spike
-  step. On the cs448b trace the reward of equal split rises from +0.21 to
-  +0.40 as the mean load goes from 20 to 60 while the delivered fraction
-  falls from 52% to 45% (`qa/research/trace_load_sweep.log`). Even on
+  step. On an earlier, very bursty trace (since removed) the reward of equal
+  split rose from +0.21 to +0.40 as the mean load went from 20 to 60 while
+  the delivered fraction fell from 52% to 45%
+  (`qa/research/trace_load_sweep.log`). Even on
   stationary synthetic traffic the two can rank policies differently,
   because the reward also weighs delay and deadlines: on the headline
   scenario PPO is second on delivered traffic and fourth on reward

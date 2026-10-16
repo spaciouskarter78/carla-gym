@@ -46,8 +46,24 @@ import numpy as np
 from carla_gym.core.traffic import Packet
 
 
+# The Abilene research backbone as distributed by SNDlib (network "abilene":
+# 12 routers, 15 links, capacities in Mbit/s); https://sndlib.put.poznan.pl.
+# Node ids follow this (alphabetical) order. Link capacities are used
+# relative to the largest (9920 Mbit/s), so one link runs at a quarter.
+ABILENE_NODES = ("ATLAM5", "ATLAng", "CHINng", "DNVRng", "HSTNng", "IPLSng",
+                 "KSCYng", "LOSAng", "NYCMng", "SNVAng", "STTLng", "WASHng")
+ABILENE_LINKS = (("ATLAng", "ATLAM5", 9920.0), ("HSTNng", "ATLAng", 9920.0),
+                 ("IPLSng", "ATLAng", 2480.0), ("WASHng", "ATLAng", 9920.0),
+                 ("IPLSng", "CHINng", 9920.0), ("NYCMng", "CHINng", 9920.0),
+                 ("KSCYng", "DNVRng", 9920.0), ("SNVAng", "DNVRng", 9920.0),
+                 ("STTLng", "DNVRng", 9920.0), ("KSCYng", "HSTNng", 9920.0),
+                 ("LOSAng", "HSTNng", 9920.0), ("KSCYng", "IPLSng", 9920.0),
+                 ("SNVAng", "LOSAng", 9920.0), ("WASHng", "NYCMng", 9920.0),
+                 ("STTLng", "SNVAng", 9920.0))
+
+
 class NetworkModel:
-    SUPPORTED_TOPOLOGIES = ("grid", "random", "star", "mesh", "ring")
+    SUPPORTED_TOPOLOGIES = ("grid", "random", "star", "mesh", "ring", "abilene")
     QUEUEING = ("per_link", "shared_fifo")
     TIE_BREAK = ("random", "first")
     SERVICE_ORDER = ("random", "id")
@@ -82,6 +98,9 @@ class NetworkModel:
             raise ValueError(f"num_nodes must be >= 2, got {num_nodes}")
         if link_capacity <= 0 or node_buffer <= 0:
             raise ValueError("link_capacity and node_buffer must be positive")
+        if topology == "abilene" and num_nodes != len(ABILENE_NODES):
+            raise ValueError(f"the abilene topology has {len(ABILENE_NODES)} nodes; pass "
+                             f"num_nodes={len(ABILENE_NODES)}, got {num_nodes}")
         if topology == "grid" and int(round(np.sqrt(num_nodes))) ** 2 != num_nodes:
             raise ValueError(f"grid topology needs a perfect-square num_nodes "
                              f"(4, 9, 16, ...), got {num_nodes}")
@@ -115,8 +134,10 @@ class NetworkModel:
             if not 0.0 < scale <= 1.0:
                 raise ValueError(f"bottleneck scale must be in (0, 1], got {scale} for node {n}")
         scale = {n: self.bottlenecks.get(n, 1.0) for n in self.graph.nodes()}
+        # Per-link capacity scale of the topology itself (1.0 except on Abilene).
+        self._edge_scale = np.array([self.graph[u][v].get("capacity_scale", 1.0) for u, v in self._edges])
         self._edge_capacity = np.array(
-            [self.link_capacity * min(scale[u], scale[v]) for u, v in self._edges])
+            [self.link_capacity * min(scale[u], scale[v]) for u, v in self._edges]) * self._edge_scale
         self._node_buffer = {n: self.node_buffer * scale[n] for n in self.graph.nodes()}
         self.reset()
 
@@ -141,6 +162,13 @@ class NetworkModel:
             g = nx.complete_graph(self.num_nodes)
         elif t == "ring":
             g = nx.cycle_graph(self.num_nodes)
+        elif t == "abilene":
+            idx = {name: i for i, name in enumerate(ABILENE_NODES)}
+            top = max(c for _, _, c in ABILENE_LINKS)
+            g = nx.Graph()
+            g.add_nodes_from(range(len(ABILENE_NODES)))
+            for a, b, c in ABILENE_LINKS:
+                g.add_edge(idx[a], idx[b], capacity_scale=c / top)
         else:  # pragma: no cover
             raise ValueError(t)
         return g

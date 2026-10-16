@@ -1,0 +1,12 @@
+Scenario `abilene_l120_b08` (--topology abilene --nodes 12 --trace data/abilene_trace_20040301_7d.csv.gz --load 120 --budget 0.8 --trace-random-start). Episode aggregates over steps 20..199 of test seeds 2000..2009, mean ± 95% CI (agents: over training seeds; baselines: over test episodes). Delivered % and Dropped % are of traffic offered in the same window; the remainder is backlog growth. The `random` row draws its own actions here, so its reward differs slightly from the reward table. Agent and deterministic-baseline rewards match final_eval.csv (600 compared, max difference 2.2e-16).
+
+| Policy | Reward | Delivered % | Dropped % | Delay of delivered packets (steps) | Deadline misses per delivered packet |
+|---|---:|---:|---:|---:|---:|
+| congestion_aware | +0.226 | 80.7 ± 8.5 | 19.5 ± 8.4 | 4.82 ± 0.14 | 0.197 ± 0.014 |
+| SAC | +0.189 | 78.5 ± 2.3 | 21.8 ± 2.4 | 5.16 ± 0.31 | 0.234 ± 0.019 |
+| PPO | +0.093 | 75.4 ± 3.3 | 24.9 ± 3.3 | 5.67 ± 0.52 | 0.266 ± 0.033 |
+| load_aware_routing | +0.089 | 74.8 ± 9.1 | 25.5 ± 9.1 | 5.33 ± 0.35 | 0.245 ± 0.031 |
+| queue_proportional | -0.120 | 67.4 ± 5.8 | 32.8 ± 5.8 | 4.98 ± 0.10 | 0.207 ± 0.010 |
+| max_bandwidth | -0.314 | 61.7 ± 6.0 | 38.7 ± 6.0 | 5.05 ± 0.17 | 0.212 ± 0.023 |
+| random | -0.792 | 42.8 ± 5.0 | 57.8 ± 4.9 | 9.17 ± 0.44 | 0.540 ± 0.051 |
+| min_bandwidth | -1.670 | 6.9 ± 1.0 | 92.5 ± 1.2 | 50.86 ± 2.73 | 2.512 ± 0.130 |

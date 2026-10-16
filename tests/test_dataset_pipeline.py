@@ -36,8 +36,11 @@ RAW = os.path.join(DATA, "raw")
 CS448B = os.path.join(RAW, "cs448b_ipasn.csv")
 PCAP_NUMERIC = os.path.join(RAW, "output1.csv")
 PCAP_TEXT = os.path.join(RAW, "Midterm_53_group.csv")
-PCAP_TRACE = os.path.join(DATA, "pcap_trace.csv")
-CS448B_TRACE = os.path.join(DATA, "cs448b_trace.csv")
+# The distributed trace: one week of SNDlib's Abilene traffic matrices
+# (data/ABILENE_TRACE.md). The pcap and cs448b traces were removed in 0.4.x:
+# their origin and licence could not be established.
+ABILENE_TRACE = os.path.join(DATA, "abilene_trace_20040301_7d.csv.gz")
+SNDLIB_ARCHIVE = os.path.join(RAW, "sndlib", "archives", "directed-abilene-zhang-5min-over-6months-ALL-native.tgz")
 
 needs_raw = pytest.mark.skipif(
     not all(os.path.exists(f) for f in (CS448B, PCAP_NUMERIC, PCAP_TEXT)),
@@ -182,10 +185,9 @@ def test_trace_driven_env_conserves_packet_units(tmp_path):
     """Same invariant as the Poisson-traffic conservation test, but now
     with trace-driven demand -- the simulator's bookkeeping shouldn't
     care where packets came from."""
-    out_csv = PCAP_TRACE          # committed trace == adapter output (guarded below)
-    traffic = TraceTrafficGenerator(nodes=list(range(16)), csv_path=str(out_csv),
-                                    target_load=100.0, seed=0)
-    env = CarlaGymEnv(topology="grid", num_nodes=16, bandwidth_budget=0.5,
+    traffic = TraceTrafficGenerator(nodes=list(range(12)), csv_path=ABILENE_TRACE,
+                                    target_load=100.0, seed=0, random_start=True)
+    env = CarlaGymEnv(topology="abilene", num_nodes=12, bandwidth_budget=0.5,
                       max_steps=50, traffic=traffic, seed=0)
     env.reset(seed=0)
     rng = np.random.default_rng(0)
@@ -230,16 +232,14 @@ def test_rollout_works_with_monitor_wrapped_env():
     assert np.isfinite(m) and np.isfinite(sd)
 
 
-def test_bandwidth_budget_changes_outcome_on_real_trace(tmp_path):
+def test_bandwidth_budget_changes_outcome_on_real_trace():
     """The central claim of the trace-driven setup: under a tight budget,
     congestion-aware allocation should not do worse than uniform -- if it
-    did, there would be nothing for PPO to learn from this trace."""
-    out_csv = PCAP_TRACE          # committed trace == adapter output (guarded below)
-
+    did, there would be nothing for an agent to learn from this trace."""
     def run(policy_weight_fn, budget):
-        traffic = TraceTrafficGenerator(nodes=list(range(16)), csv_path=str(out_csv),
-                                        target_load=110.0, seed=0)
-        env = CarlaGymEnv(topology="grid", num_nodes=16, bandwidth_budget=budget,
+        traffic = TraceTrafficGenerator(nodes=list(range(12)), csv_path=ABILENE_TRACE,
+                                        target_load=120.0, seed=0, random_start=True)
+        env = CarlaGymEnv(topology="abilene", num_nodes=12, bandwidth_budget=budget,
                           max_steps=100, traffic=traffic, seed=0)
         obs, _ = env.reset(seed=0)
         total = 0.0
@@ -261,16 +261,26 @@ def test_bandwidth_budget_changes_outcome_on_real_trace(tmp_path):
 
 
 # ---------------------------------------------------------------- trace load calibration / committed traces
-@pytest.mark.parametrize("trace,nodes", [("cs448b_trace.csv", 16), ("pcap_trace.csv", 16)])
-def test_trace_mean_load_matches_target_including_empty_bins(trace, nodes):
-    """Regression guard: the rescaling averaged over non-empty bins only, so a
-    trace with gaps (the pcap trace has 6 empty bins of 252) under-delivered."""
-    gen = TraceTrafficGenerator(list(range(nodes)), os.path.join(DATA, trace),
-                                target_load=110.0, seed=0)
+def test_trace_mean_load_matches_target():
+    gen = TraceTrafficGenerator(list(range(12)), ABILENE_TRACE, target_load=110.0, seed=0)
     expected = sum(rows[:, 2].sum() for rows in gen.by_step.values()) / gen.n_steps
     assert expected == pytest.approx(110.0)
-    realised = np.mean([sum(p.size for p in gen.generate(t)) for t in range(3 * gen.n_steps)])
+    realised = np.mean([sum(p.size for p in gen.generate(t)) for t in range(gen.n_steps)])
     assert realised == pytest.approx(110.0, rel=0.05)
+
+
+def test_trace_mean_load_counts_empty_bins(tmp_path):
+    """Regression guard: the rescaling averaged over non-empty bins only, so a
+    trace with gaps under-delivered."""
+    csv = tmp_path / "gappy.csv"
+    pd.DataFrame({"step": [0, 3, 9], "src": [0, 1, 2], "dst": [1, 2, 0],
+                  "volume": [5.0, 1.0, 2.0]}).to_csv(csv, index=False)        # bins 1-2, 4-8 empty
+    gen = TraceTrafficGenerator(list(range(9)), str(csv), target_load=50.0, seed=0)
+    assert gen.n_steps == 10
+    expected = sum(rows[:, 2].sum() for rows in gen.by_step.values()) / gen.n_steps
+    assert expected == pytest.approx(50.0)
+    realised = np.mean([sum(p.size for p in gen.generate(t)) for t in range(300 * gen.n_steps)])
+    assert realised == pytest.approx(50.0, rel=0.05)
 
 
 def test_trace_with_no_usable_rows_is_rejected(tmp_path):
@@ -280,19 +290,15 @@ def test_trace_with_no_usable_rows_is_rejected(tmp_path):
         TraceTrafficGenerator(list(range(9)), str(csv))
 
 
-@needs_raw
-@pytest.mark.parametrize("raw,committed,kind", [
-    (CS448B, "cs448b_trace.csv", "cs448b"),
-    (PCAP_NUMERIC, "pcap_trace.csv", "pcap"),
-    (PCAP_TEXT, "pcap_trace.csv", "pcap"),
-])
-def test_committed_traces_match_the_adapters(raw, committed, kind):
-    """The derived traces in data/ must be exactly what the adapters produce
-    from the raw files. Both pcap exports reduce to the same trace."""
-    path = raw
-    df = convert_cs448b(path) if kind == "cs448b" else convert_packet_capture(path)
-    ref = pd.read_csv(os.path.join(DATA, committed))
-    pd.testing.assert_frame_equal(df.reset_index(drop=True), ref, check_dtype=False)
+@pytest.mark.skipif(not os.path.exists(SNDLIB_ARCHIVE),
+                    reason="the SNDlib archive is not distributed; download it to run this test")
+def test_committed_abilene_trace_matches_the_conversion_script(tmp_path):
+    """data/abilene_trace_20040301_7d.csv.gz must be exactly what
+    scripts/prepare_sndlib_trace.py produces from SNDlib's archive."""
+    from scripts.prepare_sndlib_trace import main as prepare
+    out = tmp_path / "abilene.csv.gz"
+    prepare(["--tgz", SNDLIB_ARCHIVE, "--start", "20040301", "--days", "7", "--out", str(out)])
+    pd.testing.assert_frame_equal(pd.read_csv(out), pd.read_csv(ABILENE_TRACE))
 
 
 @needs_raw
@@ -309,14 +315,13 @@ def test_random_topology_placement_uses_the_env_topology_seed():
     assert degs[int(load.idxmax())] == max(degs.values())
 
 
-# ---------------------------------------------------------------- committed traces (no raw data needed)
-@pytest.mark.parametrize("trace", [PCAP_TRACE, CS448B_TRACE])
-def test_committed_trace_is_well_formed_and_anonymous(trace):
-    """The distributed traces hold node ids only: no addresses, no self-loops,
+# ---------------------------------------------------------------- committed trace (no raw data needed)
+def test_committed_trace_is_well_formed_and_anonymous():
+    """The distributed trace holds node ids only: no addresses, no self-loops,
     one row per (step, src, dst)."""
-    df = pd.read_csv(trace)
+    df = pd.read_csv(ABILENE_TRACE)
     assert list(df.columns) == ["step", "src", "dst", "volume"]
-    assert df["src"].between(0, 15).all() and df["dst"].between(0, 15).all()
+    assert df["src"].between(0, 11).all() and df["dst"].between(0, 11).all()
     assert (df["src"] != df["dst"]).all() and (df["volume"] > 0).all()
     assert not df.duplicated(["step", "src", "dst"]).any()
     assert df["step"].min() == 0
@@ -324,17 +329,10 @@ def test_committed_trace_is_well_formed_and_anonymous(trace):
         assert pd.api.types.is_integer_dtype(df[col])
 
 
-def test_committed_pcap_trace_puts_busiest_node_on_best_connected_position():
-    df = pd.read_csv(PCAP_TRACE)
-    degrees = dict(NetworkModel(topology="grid", num_nodes=16).graph.degree())
-    load = df.groupby("dst")["volume"].sum().add(df.groupby("src")["volume"].sum(), fill_value=0.0)
-    assert degrees[int(load.idxmax())] == max(degrees.values())
-
-
-@pytest.mark.parametrize("trace", [PCAP_TRACE, CS448B_TRACE])
-def test_committed_trace_drives_the_env(trace):
-    traffic = TraceTrafficGenerator(nodes=list(range(16)), csv_path=trace, target_load=100.0, seed=0)
-    env = CarlaGymEnv(topology="grid", num_nodes=16, bandwidth_budget=0.5, max_steps=30,
+def test_committed_trace_drives_the_env():
+    traffic = TraceTrafficGenerator(nodes=list(range(12)), csv_path=ABILENE_TRACE, target_load=100.0,
+                                    seed=0, random_start=True)
+    env = CarlaGymEnv(topology="abilene", num_nodes=12, bandwidth_budget=0.5, max_steps=30,
                       traffic=traffic, seed=0)
     obs, _ = env.reset(seed=0)
     for _ in range(30):

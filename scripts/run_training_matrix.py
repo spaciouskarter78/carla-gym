@@ -9,7 +9,9 @@ Scenarios (0.4.0 simulator; chosen on validation seeds, see
 docs/HEADLINE_SCENARIO.md):
     grid_l125_b06        headline: 3x3 grid, load x1.25, budget 0.6
     grid_bottleneck_b08  3x3 grid, centre node at half capacity, budget 0.8
-    pcap40_grid16_b05    4x4 grid, pcap trace at load 40, budget 0.5
+    abilene_l120_b08     SNDlib Abilene topology and one-week traffic trace,
+                         mean load 120, budget 0.8 (replaces pcap40_grid16_b05,
+                         whose trace had no established provenance)
     random9_l15_b06      fixed random graph (topology_seed 0), load x1.5,
                          budget 0.6; bandwidth-dominated, not a replication
                          of the headline
@@ -38,11 +40,14 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 HEADLINE = ["--load-scale", "1.25", "--budget", "0.6"]
 RANDOM9 = ["--topology", "random", "--topology-seed", "0", "--load-scale", "1.5", "--budget", "0.6"]
+# Real topology and traffic: SNDlib Abilene, one week of 5-minute matrices (docs/ABILENE_SCENARIO.md).
+ABILENE = ["--topology", "abilene", "--nodes", "12", "--trace", "data/abilene_trace_20040301_7d.csv.gz",
+           "--load", "120", "--budget", "0.8", "--trace-random-start"]
 SCENARIOS = {
     # name: extra train_agent.py arguments
     "grid_l125_b06": HEADLINE,
     "grid_bottleneck_b08": ["--bottleneck", "4:0.5"],
-    "pcap40_grid16_b05": ["--trace", "data/pcap_trace.csv", "--nodes", "16", "--load", "40", "--budget", "0.5"],
+    "abilene_l120_b08": ABILENE,
     "random9_l15_b06": RANDOM9,
 }
 ABLATIONS = {

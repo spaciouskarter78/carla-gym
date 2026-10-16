@@ -5,7 +5,7 @@ against the rule-based baselines on held-out seeds.
     $env:PYTHONPATH = "."        (bash: export PYTHONPATH=.)
     python examples/train_agent.py --algo ppo --timesteps 300000 --seed 0
     python examples/train_agent.py --algo sac --timesteps 100000 --seed 0
-    python examples/train_agent.py --algo ppo --trace data/pcap_trace.csv --nodes 16 --load 40 --budget 0.5
+    python examples/train_agent.py --algo ppo --topology abilene --nodes 12 --trace data/abilene_trace_20040301_7d.csv.gz --load 120 --budget 0.8 --trace-random-start
 
 Writes to --out (default results/<algo>_seed<seed>/):
     train_monitor.csv   per-episode training return (stable-baselines3 Monitor)
@@ -53,7 +53,8 @@ def make_env(args, seed, rescale=True, monitor_file=None):
         traffic = None
         if args.trace:
             traffic = TraceTrafficGenerator(list(range(args.nodes)), args.trace,
-                                            target_load=args.load, seed=seed)
+                                            target_load=args.load, seed=seed,
+                                            random_start=getattr(args, "trace_random_start", False))
         env = CarlaGymEnv(topology=args.topology, num_nodes=args.nodes,
                           max_steps=args.steps, bandwidth_budget=args.budget,
                           load_scale=getattr(args, "load_scale", 1.0),
@@ -158,6 +159,8 @@ def parse_args(argv=None, default_algo="ppo"):
                    help="ablation: let the agent control only one half of the action")
     p.add_argument("--trace", default=None, help="CSV: step,src,dst,volume")
     p.add_argument("--load", type=float, default=104.0, help="trace target load")
+    p.add_argument("--trace-random-start", action="store_true",
+                   help="start each episode at a random time bin of the trace (long traces)")
     p.add_argument("--n-envs", type=int, default=None,
                    help="parallel envs (default 4 for PPO, 1 for SAC/TD3)")
     p.add_argument("--seed", type=int, default=0)

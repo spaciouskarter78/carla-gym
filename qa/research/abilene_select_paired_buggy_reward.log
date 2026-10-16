@@ -1,0 +1,14 @@
+cells meeting C1-C4; paired 95% CI half-width over 30 validation seeds
+
+ load  budget             best  delivered_%  unpaired_ci  best_minus_2nd  paired_ci  best_minus_max_bw  paired_ci_vs_max_bw  C5_paired
+   80     0.5 congestion_aware         87.0       0.0473           0.161      0.020              0.472                0.018       True
+  100     0.5 congestion_aware         73.8       0.0806           0.145      0.025              0.427                0.032       True
+  100     0.6 congestion_aware         81.4       0.0627           0.193      0.023              0.437                0.021       True
+  100     0.7 congestion_aware         85.8       0.0460           0.159      0.031              0.429                0.018      False
+  100     0.8 congestion_aware         86.6       0.0467           0.055      0.021              0.360                0.026       True
+  120     0.6 congestion_aware         71.8       0.0770           0.149      0.023              0.394                0.025       True
+  120     0.7 congestion_aware         77.0       0.0645           0.200      0.021              0.387                0.019       True
+  120     0.8 congestion_aware         78.8       0.0607           0.105      0.019              0.341                0.020       True
+
+qualifying under C1-C4 + C5': 7 cell(s)
+SELECTED: load 120, budget 0.7 (best heuristic congestion_aware, 77.0% delivered)
